@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -26,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     private BluetoothAdapter mBluetoothAdapter;
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, Constantes.REQUEST_ENABLE_BT);
         }
-
+        BLEHelper.getInstance().setBluetoothAdapter(mBluetoothAdapter);
         /*FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -84,5 +86,33 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case Constantes.REQUEST_ENABLE_BT:
+                if (resultCode != RESULT_OK) {
+                    // User declined to enable Bluetooth, exit the app.
+                    Toast.makeText(this, R.string.bt_not_enabled_leaving,
+                            Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                // Bluetooth is now Enabled, are Bluetooth Advertisements supported on
+                // this device?
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    if (!mBluetoothAdapter.isMultipleAdvertisementSupported()) {
+                        Toast.makeText(this, R.string.bt_ads_not_supported,
+                                Toast.LENGTH_SHORT).show();
+
+                    }
+                }
+                // Everything is supported and enabled, load the fragments.
+                BLEHelper.getInstance().setBluetoothAdapter(mBluetoothAdapter);
+
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }
